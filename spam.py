@@ -11,13 +11,13 @@ while True:
     vect = cv.transform([text]).toarray()
 
     # Prediction
-    my_prediction = model.predict(vect)
+    prediction = model.predict(vect)
 
     # Prediction probability
     prob = model.predict_proba(vect)
 
     # Print result
-    if my_prediction == 1:
+    if prediction == 1:
         print(f'Likely Spam, Confidence Level: {prob[0][1]*100:.2f}%\n')
     else:
         print(f'Unlikely Spam, Confidence Level: {prob[0][0]*100:.2f}%\n')

@@ -17,7 +17,7 @@ while True:
     X = pad_sequences(sequences, maxlen=50)
 
     # Prediction
-    y_pred = model.predict(X, verbose = 0)
+    y_pred = model.predict(X, verbose=0)
     y_pred = np.argmax(y_pred, axis=1)
 
     # Print result
