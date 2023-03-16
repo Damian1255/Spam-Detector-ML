@@ -1,22 +1,23 @@
 import pickle
 from sklearn.feature_extraction.text import CountVectorizer
 
-# Load model
+# Load model & vectorizer
 model = pickle.load(open('Dumps/spam.pkl', 'rb'))
-
-# Load vectorizer
 cv = pickle.load(open('Dumps/vectorizer.pkl', 'rb'))
 
 while True:
-    # Predict
+    # Get input text for prediction
     text = input('Enter your message: ')
     vect = cv.transform([text]).toarray()
 
-    # Predict
+    # Prediction
     my_prediction = model.predict(vect)
+
+    # Prediction probability
+    prob = model.predict_proba(vect)
 
     # Print result
     if my_prediction == 1:
-        print('Spam')
+        print(f'Likely Spam, Confidence Level: {prob[0][1]*100:.2f}%\n')
     else:
-        print('Not Spam')
+        print(f'Unlikely Spam, Confidence Level: {prob[0][0]*100:.2f}%\n')
