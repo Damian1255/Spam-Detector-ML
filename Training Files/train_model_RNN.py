@@ -1,13 +1,12 @@
+import pandas as pd
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
-import pandas as pd
-import numpy as np
 
 # Load the dataset
-dataset = pd.read_csv('Dataset/SMSSpamCollection_1000.txt', sep='\t', names=['label', 'message'])
+dataset = pd.read_csv('./Dataset/SMSSpamCollection_1000.txt', sep='\t', names=['label', 'message'])
 
 # Preprocess the data
 tokenizer = Tokenizer()
@@ -31,11 +30,11 @@ model.add(Dense(units=3, activation='softmax'))
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 # Train the model
-model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2)
+model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
 
 # Evaluate the model
 loss, accuracy = model.evaluate(X_test, y_test)
 print(f'Test Loss: {loss}, Test Accuracy: {accuracy}')
 
 # Save the model
-model.save('Models/RNNmodel.h5')
+model.save('./Models/spam_RNN.h5')

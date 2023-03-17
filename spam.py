@@ -2,7 +2,7 @@ import pickle
 from sklearn.feature_extraction.text import CountVectorizer
 
 # Load model & vectorizer
-model = pickle.load(open('Dumps/spam.pkl', 'rb'))
+model = pickle.load(open('Models/spam.pkl', 'rb'))
 cv = pickle.load(open('Dumps/vectorizer.pkl', 'rb'))
 
 while True:
@@ -13,7 +13,7 @@ while True:
     # Prediction
     prediction = model.predict(vect)
 
-    # Prediction probability
+    # Prediction confidence level
     prob = model.predict_proba(vect)
 
     # Print result
