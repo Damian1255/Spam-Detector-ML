@@ -35,8 +35,6 @@ print(cm)
 report = classification_report(y_test, y_pred)
 print(report)
 
-# Save model
+# Save model & vectorizer
 pickle.dump(classifier, open('./Models/spam.pkl', 'wb'))
-
-# Save vectorizer
 pickle.dump(cv, open('./Dumps/vectorizer.pkl', 'wb'))
