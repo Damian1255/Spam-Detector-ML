@@ -37,4 +37,4 @@ loss, accuracy = model.evaluate(X_test, y_test)
 print(f'Test Loss: {loss}, Test Accuracy: {accuracy}')
 
 # Save the model
-model.save('./Models/spam_RNN.h5')
+model.save('./Models/model_RNN.h5')
