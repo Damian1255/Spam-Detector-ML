@@ -1,28 +1,34 @@
 import numpy as np
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+import tensorflow as tf
 from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-# Load the model
-model = load_model('Models/model_RNN_v2.h5')
+# Load the saved model
+model = load_model('./Models/model_RNN_v2.h5')
 
-while True:
-    # Get input text for prediction
-    text = input('Enter your message: ')
+# Load the tokenizer
+tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(open('./Dumps/tokenizer_RNN_v2.json').read())
 
-    # Preprocess the text
-    tokenizer = Tokenizer()
-    tokenizer.fit_on_texts([text])
-    sequences = tokenizer.texts_to_sequences([text])
-    X = pad_sequences(sequences, maxlen=50)
+# Define the maximum sequence length
+max_sequence_length = 50
 
-    # Prediction
-    y_pred = model.predict(X, verbose=0)
-    y_pred = np.argmax(y_pred, axis=1)
+# Define the label encodings
+labels = ['ham', 'spam']
 
-    # Print result
-    if y_pred == 1:
-        print('Likely Spam\n')
-    else:
-        print('Unlikely Spam\n')
+# Ask the user for input
+message = input("Enter a message: ")
 
+# Tokenize the message
+tokens = tokenizer.texts_to_sequences([message])
+
+# Pad the token sequence
+padded_tokens = pad_sequences(tokens, maxlen=max_sequence_length, padding='post')
+
+# Make the prediction
+prediction = model.predict([padded_tokens, np.zeros((1, len(labels)))])[0]
+
+# Get the predicted label
+predicted_label = labels[np.argmax(prediction)]
+
+# Print the result
+print(f"The message '{message}' is {predicted_label}")
