@@ -16,12 +16,6 @@ dataset = pd.read_csv('./Dataset/SMSSpamCollection_1000.txt', sep='\t', names=['
 # Preprocess the data
 tokenizer = Tokenizer()
 tokenizer.fit_on_texts(dataset['message'])
-
-# Save the tokenizer
-with open('./Dumps/tokenizer_RNN_v2.json', 'w', encoding='utf-8') as f:
-    f.write(tokenizer.to_json())
-
-# Convert the text to sequences
 sequences = tokenizer.texts_to_sequences(dataset['message'])
 X = pad_sequences(sequences, maxlen=50)
 y = pd.get_dummies(dataset['label']).values
