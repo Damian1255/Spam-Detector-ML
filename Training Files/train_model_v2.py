@@ -1,10 +1,12 @@
 import pandas as pd
 import pickle
+
+from sklearn import metrics
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn import metrics
 from sklearn.feature_extraction.text import TfidfTransformer
+
 import string
 from nltk.corpus import stopwords
 
@@ -58,9 +60,12 @@ print('\n==================== Results ====================')
 print(f'Accuracy: {metrics.accuracy_score(y_test, y_pred_class)}')
 print(f'Precision: {metrics.precision_score(y_test, y_pred_class)}')
 print(f'AUC: {metrics.roc_auc_score(y_test, y_pred_prob)}')
+print(f'Recall: {metrics.recall_score(y_test, y_pred_class)}')
+print(f'F1 Score: {metrics.f1_score(y_test, y_pred_class)}')
 print(f'Confusion Matrix:\n{metrics.confusion_matrix(y_test, y_pred_class)}')
 
 # Save model & vectorizer
 pickle.dump(nb, open('./Models/model_v2.pkl', 'wb'))
 pickle.dump(cv, open('./Dumps/vectorizer_v2.pkl', 'wb'))
+
 print('\nModel & vectorizer saved...')

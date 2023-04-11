@@ -2,7 +2,7 @@ import pickle
 from sklearn.feature_extraction.text import CountVectorizer
 
 # Load model & vectorizer
-model = pickle.load(open('Models/spam.pkl', 'rb'))
+model = pickle.load(open('Models/model.pkl', 'rb'))
 cv = pickle.load(open('Dumps/vectorizer.pkl', 'rb'))
 
 while True:

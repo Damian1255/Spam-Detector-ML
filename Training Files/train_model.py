@@ -6,11 +6,12 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import confusion_matrix, classification_report
 
 # Importing the dataset
-dataset = pd.read_csv('./Dataset/SMSSpamCollection_1000.txt', sep='\t', names=['label', 'message'])
+dataset = pd.read_csv('./Dataset/spam.csv', encoding='latin-1')
 
 # Data preprocessing and cleaning
+dataset.dropna(how="any", inplace=True, axis=1)
+dataset.columns = ['label', 'message']
 dataset['label'] = dataset.label.map({'ham': 0, 'spam': 1})
-dataset = dataset.iloc[1:]
 
 # Splitting the dataset into the Training set and Test set
 X_train, X_test, y_train, y_test = train_test_split(dataset['message'], dataset['label'], test_size = 0.15, random_state = 0)

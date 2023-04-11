@@ -4,7 +4,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import load_model
 
 # Load the model
-model = load_model('Models/model_RNN.h5')
+model = load_model('Models/model_RNN_v2.h5')
 
 while True:
     # Get input text for prediction
