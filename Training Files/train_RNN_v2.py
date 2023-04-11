@@ -1,89 +1,78 @@
+import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from tensorflow import keras
-import tensorflow_hub as hub
-from tensorflow.keras import layers
-from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout, Concatenate, Input
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import Dropout
 
-df = pd.read_csv("./Dataset/spam.csv", encoding="latin-1")
+# Load the dataset
+dataset = pd.read_csv('./Dataset/SMSSpamCollection_1000.txt', sep='\t', names=['label', 'message'])
 
-# Drop unnecessary columns and rename the columns
-df = df.drop(['Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4'], axis=1)
-df = df.rename(columns={'v1':'label', 'v2':'Text'})
-df['label_in_num'] = df['label'].map({'ham':0,'spam':1})
+# Preprocess the data
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts(dataset['message'])
+sequences = tokenizer.texts_to_sequences(dataset['message'])
+X = pad_sequences(sequences, maxlen=50)
+y = pd.get_dummies(dataset['label']).values
 
-text_words_lengths = [len(df.loc[i]['Text'].split()) for i in range(0, len(df))]
-total_length = np.sum(text_words_lengths)
-text_words_mean = int(np.mean(text_words_lengths))
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-# Split the data into train and test
-X, y = np.asanyarray(df['Text']), np.asanyarray(df['label_in_num'])
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=24)
+# Use early stopping to prevent overfitting
+early_stopping = EarlyStopping(monitor='val_loss', patience=3, verbose=1)
 
-MAXTOKENS = total_length
-OUTPUTLEN = text_words_mean
+# Load the pre-trained word embedding
+embeddings_index = {}
+with open(os.path.join('./Dumps', 'glove.6B.100d.txt'), encoding='utf8') as f:
+    for line in f:
+        values = line.split()
+        word = values[0]
+        coefs = np.asarray(values[1:], dtype='float32')
+        embeddings_index[word] = coefs
 
-text_vec = layers.TextVectorization(
-    max_tokens=MAXTOKENS,
-    standardize='lower_and_strip_punctuation',
-    output_mode='int',
-    output_sequence_length=OUTPUTLEN
-)
+# Create an embedding matrix using the pre-trained word embedding
+word_index = tokenizer.word_index
+num_words = len(word_index) + 1
+embedding_dim = 100
+embedding_matrix = np.zeros((num_words, embedding_dim))
+for word, i in word_index.items():
+    embedding_vector = embeddings_index.get(word)
+    if embedding_vector is not None:
+        embedding_matrix[i] = embedding_vector
 
-text_vec.adapt(X_train)
+# Use early fusion technique
+label_input = Input(shape=(y.shape[1],))
+text_input = Input(shape=(50,))
+embedding_layer = Embedding(num_words,
+                            embedding_dim,
+                            weights=[embedding_matrix],
+                            input_length=50,
+                            trainable=False)
+x = embedding_layer(text_input)
+x = LSTM(64, dropout=0.2, recurrent_dropout=0.2)(x)
+x = Dense(32, activation='relu')(x)
+x = Dropout(0.5)(x)
+concat = Concatenate()([x, label_input])
+output = Dense(3, activation='softmax')(concat)
+model = Model(inputs=[text_input, label_input], outputs=output)
 
-embedding_layer = layers.Embedding(
-    input_dim=MAXTOKENS,
-    output_dim=128,
-    embeddings_initializer='uniform',
-    input_length=OUTPUTLEN
-)
+# Use a different optimizer
+optimizer = tf.keras.optimizers.SGD(learning_rate=0.01)
 
-def compile_model(model):
-    model.compile(optimizer=keras.optimizers.Adam(),
-                 loss=keras.losses.BinaryCrossentropy(),
-                 metrics=['accuracy'])    
+# Compile the model
+model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
-def fit_model(model, epochs, X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test):
-    history = model.fit(X_train,
-              y_train,
-             epochs=epochs,
-             validation_data=(X_test, y_test),
-             validation_steps=int(0.2*len(X_test)))
-    return history
+# Train the model
+model.fit([X_train, y_train], y_train, epochs=50, batch_size=32, validation_split=0.2, callbacks=[early_stopping])
 
-def evaluate_model(model, X, y):
-    y_preds = np.round(model.predict(X))
-    accuracy = accuracy_score(y, y_preds)
-    precision = precision_score(y, y_preds)
-    recall = recall_score(y, y_preds)
-    f1 = f1_score(y, y_preds)
-    
-    model_results_dict = {'accuracy':accuracy,
-                         'precision':precision,
-                         'recall':recall,
-                         'f1-score':f1}
-    
-    return model_results_dict
+# Evaluate the model
+loss, accuracy = model.evaluate([X_test, y_test], y_test)
+print(f'Test Loss: {loss}, Test Accuracy: {accuracy}')
 
-model_3 = keras.Sequential()
-use_layer = hub.KerasLayer("https://tfhub.dev/google/universal-sentence-encoder/4",
-                           trainable=False,
-                           input_shape=[],
-                           dtype=tf.string,
-                           name='USE')
-model_3.add(use_layer)
-model_3.add(layers.Dropout(0.2))
-model_3.add(layers.Dense(64, activation=keras.activations.relu))
-model_3.add(layers.Dense(1, activation=keras.activations.sigmoid))
-compile_model(model_3)
-
-history_3 = fit_model(model_3, epochs=10)
-
-model_3_results = evaluate_model(model_3, X_test, y_test)
-print(model_3_results)
-
-# save the model
-model_3.save('./Models/model_RNN_v2.h5')
+# Save the model
+model.save('./Models/model_RNN_v2.h5')
